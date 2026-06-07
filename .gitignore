@@ -1,0 +1,10 @@
+build-dir/
+repo/
+.flatpak-builder/
+.venv-flatpak-tools/
+*.log
+# Release bundles are for GitHub Releases, not normal git history.
+*.flatpak
+*.flatpak.sha256
+!release/.gitkeep
+__pycache__/

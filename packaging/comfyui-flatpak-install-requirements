@@ -1,0 +1,87 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+COMFY_ROOT=/app/share/comfyui
+DATA_HOME="${XDG_DATA_HOME:-$HOME/.local/share}"
+CACHE_HOME="${XDG_CACHE_HOME:-$HOME/.cache}"
+PROFILE="${COMFYUI_FLATPAK_PROFILE:-default}"
+PROFILE_SAFE="$(printf '%s' "$PROFILE" | tr -c 'A-Za-z0-9_.-' '_' | sed 's/^_*//; s/_*$//')"
+[ -n "$PROFILE_SAFE" ] || PROFILE_SAFE=default
+if [ "$PROFILE_SAFE" = "default" ]; then
+  DEFAULT_DATA_ROOT="$DATA_HOME/ComfyUI"
+  DEFAULT_PY_USER_BASE="$DATA_HOME/python"
+else
+  DEFAULT_DATA_ROOT="$DATA_HOME/ComfyUI-profiles/$PROFILE_SAFE"
+  DEFAULT_PY_USER_BASE="$DATA_HOME/python-profiles/$PROFILE_SAFE"
+fi
+DATA_ROOT="${COMFYUI_FLATPAK_DATA_ROOT:-$DEFAULT_DATA_ROOT}"
+PY_USER_BASE="${COMFYUI_FLATPAK_PY_USER_BASE:-$DEFAULT_PY_USER_BASE}"
+STATE_DIR="$DATA_ROOT/user/__flatpak_requirements"
+CUSTOM_NODES_DIR="${COMFYUI_FLATPAK_CUSTOM_NODES_DIR:-$DATA_ROOT/custom_nodes}"
+
+mkdir -p "$PY_USER_BASE" "$CACHE_HOME/pip" "$STATE_DIR"
+export PYTHONUSERBASE="$PY_USER_BASE"
+export PATH="$PYTHONUSERBASE/bin:/app/bin:$PATH"
+export PYTHONPATH="$COMFY_ROOT${PYTHONPATH:+:$PYTHONPATH}"
+export PIP_USER=1
+export PIP_REQUIRE_VIRTUALENV=false
+export PIP_CACHE_DIR="$CACHE_HOME/pip"
+
+if [ "${COMFYUI_FLATPAK_AUTO_INSTALL_REQUIREMENTS:-1}" = "0" ]; then
+  echo "[ComfyUI Flatpak] Automatic custom-node requirement install is disabled."
+  exit 0
+fi
+
+if [ ! -d "$CUSTOM_NODES_DIR" ]; then
+  exit 0
+fi
+
+PIN_FILE="$STATE_DIR/pinned-packages.txt"
+python3 - <<'PY' > "$PIN_FILE"
+# Keep extension requirement installs from shadowing core packaged packages.
+# If an extension requires an incompatible core version, fail loudly instead.
+import importlib.metadata as md
+for name in [
+    'torch', 'torchvision', 'torchaudio', 'torchsde',
+    'transformers', 'safetensors', 'numpy', 'Pillow',
+]:
+    try:
+        print(f"{name}=={md.version(name)}")
+    except md.PackageNotFoundError:
+        pass
+PY
+
+python3 - "$CUSTOM_NODES_DIR" "$STATE_DIR" <<'PY' | while IFS= read -r req; do
+import os, sys
+root, state = sys.argv[1:3]
+skip_dirs = {'.git', '__pycache__', '.cache', 'venv', '.venv', 'env'}
+for dirpath, dirnames, filenames in os.walk(root):
+    dirnames[:] = [d for d in dirnames if d not in skip_dirs]
+    rel_depth = os.path.relpath(dirpath, root).count(os.sep)
+    if rel_depth > 3:
+        dirnames[:] = []
+        continue
+    for filename in filenames:
+        lower = filename.lower()
+        if lower == 'requirements.txt' or (lower.startswith('requirements') and lower.endswith('.txt')):
+            print(os.path.join(dirpath, filename))
+PY
+  [ -f "$req" ] || continue
+  rel="${req#$CUSTOM_NODES_DIR/}"
+  marker_name="$(printf '%s' "$rel" | sha256sum | awk '{print $1}')"
+  marker="$STATE_DIR/$marker_name.sha256"
+  hash="$(sha256sum "$req" | awk '{print $1}')"
+  if [ -f "$marker" ] && [ "$(cat "$marker" 2>/dev/null || true)" = "$hash" ]; then
+    echo "[ComfyUI Flatpak] Requirements unchanged: $rel"
+    continue
+  fi
+
+  echo "[ComfyUI Flatpak] Installing custom-node requirements: $rel"
+  if python3 -m pip install --user --disable-pip-version-check --constraint "$PIN_FILE" -r "$req"; then
+    printf '%s' "$hash" > "$marker"
+    echo "[ComfyUI Flatpak] Installed requirements: $rel"
+  else
+    echo "[ComfyUI Flatpak] WARNING: Failed to install requirements: $rel" >&2
+    echo "[ComfyUI Flatpak] You can retry manually with: flatpak run --command=comfyui-pip io.github.AyAmbo.ComfyUIFlatpak install -r '$req'" >&2
+  fi
+done

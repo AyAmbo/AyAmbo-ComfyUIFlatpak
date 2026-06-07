@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+DATA_HOME="${XDG_DATA_HOME:-$HOME/.local/share}"
+CACHE_HOME="${XDG_CACHE_HOME:-$HOME/.cache}"
+PROFILE="${COMFYUI_FLATPAK_PROFILE:-default}"
+PROFILE_SAFE="$(printf '%s' "$PROFILE" | tr -c 'A-Za-z0-9_.-' '_' | sed 's/^_*//; s/_*$//')"
+[ -n "$PROFILE_SAFE" ] || PROFILE_SAFE=default
+if [ "$PROFILE_SAFE" = "default" ]; then
+  DEFAULT_PY_USER_BASE="$DATA_HOME/python"
+else
+  DEFAULT_PY_USER_BASE="$DATA_HOME/python-profiles/$PROFILE_SAFE"
+fi
+PY_USER_BASE="${COMFYUI_FLATPAK_PY_USER_BASE:-$DEFAULT_PY_USER_BASE}"
+
+mkdir -p "$PY_USER_BASE" "$CACHE_HOME/uv"
+export PYTHONUSERBASE="$PY_USER_BASE"
+export PATH="$PYTHONUSERBASE/bin:/app/bin:$PATH"
+export PYTHONPATH="/app/share/comfyui${PYTHONPATH:+:$PYTHONPATH}"
+export UV_CACHE_DIR="$CACHE_HOME/uv"
+
+if [ "${1:-}" = "pip" ]; then
+  shift
+  exec python3 -m uv pip --system --prefix "$PY_USER_BASE" "$@"
+fi
+
+exec python3 -m uv "$@"

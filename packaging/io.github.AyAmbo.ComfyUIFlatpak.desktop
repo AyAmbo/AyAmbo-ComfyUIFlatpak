@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=ComfyUI Flatpak (Unofficial)
+Comment=Unofficial ComfyUI Flatpak with extension manager
+Exec=comfyui-flatpak --auto-launch
+Icon=io.github.AyAmbo.ComfyUIFlatpak
+Terminal=true
+Categories=Graphics;2DGraphics;
+StartupNotify=false

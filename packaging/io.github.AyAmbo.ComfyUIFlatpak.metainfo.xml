@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>io.github.AyAmbo.ComfyUIFlatpak</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>GPL-3.0-or-later</project_license>
+  <name>ComfyUI Flatpak (Unofficial)</name>
+  <summary>Unofficial Flatpak for the ComfyUI node-based AI generation interface</summary>
+  <description>
+    <p>ComfyUI is a powerful node-based interface and execution engine for AI image, video, audio, and model workflows.</p>
+    <p>This is an unofficial community Flatpak package. It is not affiliated with or endorsed by ComfyUI or Comfy Org.</p>
+    <p>This Flatpak packages ComfyUI with NVIDIA-focused GPU support, ComfyUI-Manager, git, pip, and uv so custom nodes can be installed into a sandboxed user extension layer.</p>
+    <p>Model weights are not bundled. Place models under the app data model folders or configure extra model paths.</p>
+  </description>
+  <launchable type="desktop-id">io.github.AyAmbo.ComfyUIFlatpak.desktop</launchable>
+  <url type="homepage">https://www.comfy.org/</url>
+  <url type="vcs-browser">https://github.com/Comfy-Org/ComfyUI</url>
+  <provides>
+    <binary>comfyui-flatpak</binary>
+  </provides>
+  <content_rating type="oars-1.1" />
+  <releases>
+    <release version="0.24.0" date="2026-06-06">
+      <description>
+        <p>Initial unofficial Flatpak package for ComfyUI 0.24.0.</p>
+      </description>
+    </release>
+  </releases>
+</component>
