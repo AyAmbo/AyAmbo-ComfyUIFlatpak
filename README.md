@@ -4,7 +4,7 @@ Unofficial, vibe-coded Flatpak packaging for [ComfyUI](https://github.com/Comfy-
 
 This project packages ComfyUI as a local/shareable Flatpak with NVIDIA/CUDA support, ComfyUI-Manager, `git`, `pip`, and `uv` inside the sandbox. It is not affiliated with or endorsed by ComfyUI or Comfy Org.
 
-License: GPL-3.0-or-later, matching ComfyUI.
+License: GPL-3.0-or-later.
 
 ## What is included
 
@@ -246,4 +246,4 @@ To update ComfyUI or dependencies:
 
 ## Notes
 
-This was vibe-coded with AI assistance and then validated locally. Review the scripts and manifest before publishing binaries widely.
+This was vibe-coded with AI.
