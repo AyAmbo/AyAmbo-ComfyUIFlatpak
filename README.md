@@ -8,9 +8,9 @@ License: GPL-3.0-or-later.
 
 ## What is included
 
-- ComfyUI pinned to `a65a5464c731932c1565bca95b729ecaf055162d` (`0.24.0`).
+- ComfyUI pinned to `f6c162ddcfbd7eefb39c06fe5b8d4c46e8d09f40` (`0.26.0`).
 - Freedesktop runtime/SDK `25.08`.
-- PyTorch CUDA wheel stack (`torch 2.12.0+cu130`).
+- PyTorch CUDA wheel stack (`torch 2.12.1` with CUDA 13 wheels).
 - ComfyUI-Manager enabled by default.
 - `git` for custom-node clone/update.
 - `pip` and `uv` for extension dependencies.
@@ -26,18 +26,22 @@ io.github.AyAmbo.ComfyUIFlatpak
 
 ## Install the release bundle
 
-Download the release assets:
+Download all split release assets into the same folder:
 
 ```text
-AyAmbo-ComfyUIFlatpak.flatpak
-AyAmbo-ComfyUIFlatpak.flatpak.sha256
+AyAmbo-ComfyUIFlatpak.flatpak.zst.part-*
+AyAmbo-ComfyUIFlatpak.flatpak.zst.parts.sha256
+AyAmbo-ComfyUIFlatpak.flatpak.zst.sha256
 ```
 
-Verify and install:
+Verify, join, decompress, and install:
 
 ```bash
-sha256sum -c AyAmbo-ComfyUIFlatpak.flatpak.sha256
-flatpak install --user ./AyAmbo-ComfyUIFlatpak.flatpak
+sha256sum -c AyAmbo-ComfyUIFlatpak.flatpak.zst.parts.sha256
+cat AyAmbo-ComfyUIFlatpak.flatpak.zst.part-* > AyAmbo-ComfyUIFlatpak.flatpak.zst
+sha256sum -c AyAmbo-ComfyUIFlatpak.flatpak.zst.sha256
+zstd -d -f AyAmbo-ComfyUIFlatpak.flatpak.zst
+flatpak install --user --reinstall ./AyAmbo-ComfyUIFlatpak.flatpak
 flatpak run io.github.AyAmbo.ComfyUIFlatpak
 ```
 
@@ -217,12 +221,19 @@ Create release bundle:
 scripts/make-bundle.sh
 ```
 
-Outputs:
+Outputs are written to `release/`:
 
 ```text
 AyAmbo-ComfyUIFlatpak.flatpak
 AyAmbo-ComfyUIFlatpak.flatpak.sha256
+AyAmbo-ComfyUIFlatpak.flatpak.zst
+AyAmbo-ComfyUIFlatpak.flatpak.zst.sha256
+AyAmbo-ComfyUIFlatpak.flatpak.zst.parts.sha256
+AyAmbo-ComfyUIFlatpak.flatpak.zst.part-*
+INSTALL.md
 ```
+
+Upload the `.part-*`, `.zst.sha256`, `.parts.sha256`, and `INSTALL.md` files to GitHub Releases.
 
 ## Modify/update
 

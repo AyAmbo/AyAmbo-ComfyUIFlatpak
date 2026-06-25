@@ -47,7 +47,7 @@ modules:
     sources:
       - type: git
         url: https://github.com/Comfy-Org/ComfyUI.git
-        commit: a65a5464c731932c1565bca95b729ecaf055162d
+        commit: f6c162ddcfbd7eefb39c06fe5b8d4c46e8d09f40
       - type: file
         path: packaging/comfyui-flatpak-launcher
       - type: file

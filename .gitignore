@@ -8,3 +8,10 @@ repo/
 *.flatpak.sha256
 !release/.gitkeep
 __pycache__/
+
+.pi/
+*.flatpak.zst
+*.flatpak.zst.part-*
+*.flatpak.zst.sha256
+*.flatpak.zst.parts.sha256
+release/INSTALL.md

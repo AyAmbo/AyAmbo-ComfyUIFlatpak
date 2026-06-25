@@ -181,7 +181,10 @@ if [ "${COMFYUI_FLATPAK_AUTO_INSTALL_REQUIREMENTS:-1}" != "0" ]; then
   /app/bin/comfyui-install-requirements || true
 fi
 
-cd "$COMFY_ROOT"
+# Run from the writable profile root, not from /app/share/comfyui. Some custom
+# nodes use relative paths such as models/Qwen for model downloads; keeping the
+# working directory under /app would make those writes fail with EROFS.
+cd "$DATA_ROOT"
 
 echo "ComfyUI Flatpak"
 echo "  URL:        http://127.0.0.1:8188"
