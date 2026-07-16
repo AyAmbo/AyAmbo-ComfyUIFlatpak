@@ -140,6 +140,9 @@ export PIP_REQUIRE_VIRTUALENV=false
 export PIP_CACHE_DIR="$CACHE_BASE/pip"
 export UV_CACHE_DIR="$CACHE_BASE/uv"
 export GIT_PYTHON_GIT_EXECUTABLE=/app/bin/git
+# Triton 3.7 compiles its CUDA driver bridge on first use. The Flatpak runtime
+# has no system compiler, so route it through the bundled self-contained Zig CC.
+export CC=/app/bin/comfyui-flatpak-cc
 export HF_HOME="${HF_HOME:-$CACHE_BASE/huggingface}"
 export HUGGINGFACE_HUB_CACHE="${HUGGINGFACE_HUB_CACHE:-$HF_HOME/hub}"
 export TRANSFORMERS_CACHE="${TRANSFORMERS_CACHE:-$HF_HOME/transformers}"

@@ -16,6 +16,8 @@ if torch.cuda.is_available():
     print('"'"'cuda matmul checksum'"'"', float((x @ x).sum().cpu()))
 import comfyui_manager
 print('"'"'comfyui_manager'"'"', getattr(comfyui_manager, '"'"'__file__'"'"', '"'"'ok'"'"'))
+import comfy_angle
+print('"'"'comfy_angle'"'"', getattr(comfy_angle, '"'"'__file__'"'"', '"'"'ok'"'"'))
 import git
 print('"'"'GitPython ok'"'"')
 PY
@@ -23,6 +25,9 @@ PY
 
 echo "== tool availability =="
 flatpak run --command=sh "$APP_ID" -c 'which git && git --version && python3 -m pip --version && python3 -m uv --version'
+
+echo "== Triton CUDA JIT test =="
+flatpak run --filesystem="$PWD:ro" --env=CC=/app/bin/comfyui-flatpak-cc --command=python3 "$APP_ID" "$PWD/scripts/triton-smoke-test.py"
 
 echo "== quick ComfyUI test =="
 flatpak run "$APP_ID" --cpu --quick-test-for-ci

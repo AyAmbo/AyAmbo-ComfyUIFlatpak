@@ -8,12 +8,13 @@ License: GPL-3.0-or-later.
 
 ## What is included
 
-- ComfyUI pinned to `f6c162ddcfbd7eefb39c06fe5b8d4c46e8d09f40` (`0.26.0`).
+- ComfyUI pinned to `700821e1364eaab0e8f21c538a2131719fec57bf` (`0.28.0`).
 - Freedesktop runtime/SDK `25.08`.
-- PyTorch CUDA wheel stack (`torch 2.12.1` with CUDA 13 wheels).
+- PyTorch CUDA wheel stack (`torch 2.13.0` with CUDA 13 wheels).
 - ComfyUI-Manager enabled by default.
 - `git` for custom-node clone/update.
 - `pip` and `uv` for extension dependencies.
+- Bundled Zig C compiler for Triton CUDA runtime JIT compilation.
 - Automatic custom-node `requirements*.txt` installer.
 - Sandboxed writable data/config/cache under Flatpak app data.
 - No model weights bundled.
@@ -254,7 +255,3 @@ To update ComfyUI or dependencies:
 3. Update `packaging/sources/python-requirements.in`.
 4. Run `scripts/generate-python-sources.sh`.
 5. Build/test/bundle again.
-
-## Notes
-
-This was vibe-coded with AI.

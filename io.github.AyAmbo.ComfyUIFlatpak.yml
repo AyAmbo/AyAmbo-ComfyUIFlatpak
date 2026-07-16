@@ -47,7 +47,7 @@ modules:
     sources:
       - type: git
         url: https://github.com/Comfy-Org/ComfyUI.git
-        commit: f6c162ddcfbd7eefb39c06fe5b8d4c46e8d09f40
+        commit: 700821e1364eaab0e8f21c538a2131719fec57bf
       - type: file
         path: packaging/comfyui-flatpak-launcher
       - type: file
@@ -56,6 +56,8 @@ modules:
         path: packaging/comfyui-flatpak-uv
       - type: file
         path: packaging/comfyui-flatpak-install-requirements
+      - type: file
+        path: packaging/comfyui-flatpak-cc
       - type: file
         path: packaging/io.github.AyAmbo.ComfyUIFlatpak.desktop
       - type: file
@@ -69,6 +71,12 @@ modules:
       - install -Dm755 comfyui-flatpak-pip /app/bin/comfyui-pip
       - install -Dm755 comfyui-flatpak-uv /app/bin/comfyui-uv
       - install -Dm755 comfyui-flatpak-install-requirements /app/bin/comfyui-install-requirements
+      - install -Dm755 comfyui-flatpak-cc /app/bin/comfyui-flatpak-cc
+      # Triton's runtime driver bridge includes Python.h. The Platform runtime
+      # omits development headers, so copy only Python's headers from the SDK.
+      - mkdir -p /app/share/comfyui-flatpak/include/x86_64-linux-gnu
+      - cp -a /usr/include/python3.13 /app/share/comfyui-flatpak/include/
+      - cp -a /usr/include/x86_64-linux-gnu/python3.13 /app/share/comfyui-flatpak/include/x86_64-linux-gnu/
       - install -Dm644 io.github.AyAmbo.ComfyUIFlatpak.desktop /app/share/applications/io.github.AyAmbo.ComfyUIFlatpak.desktop
       - install -Dm644 io.github.AyAmbo.ComfyUIFlatpak.metainfo.xml /app/share/metainfo/io.github.AyAmbo.ComfyUIFlatpak.metainfo.xml
       - install -Dm644 io.github.AyAmbo.ComfyUIFlatpak.svg /app/share/icons/hicolor/scalable/apps/io.github.AyAmbo.ComfyUIFlatpak.svg

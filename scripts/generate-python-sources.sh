@@ -29,7 +29,7 @@ fi
 
 rm -f "$OUT.json"
 
-PREFER_WHEELS="torch,torchsde,torchvision,torchaudio,triton,numpy,scipy,pillow,av,tokenizers,safetensors,sentencepiece,pydantic-core,kornia-rs,blake3,glfw,yarl,multidict,frozenlist,greenlet,charset-normalizer,regex,psutil,PyYAML,pyyaml,hf-xet,cffi,cryptography,pynacl,comfy-kitchen,comfy-aimdo,uv,matrix-nio,GitPython,PyGithub,cuda-bindings,nvidia-cublas,nvidia-cuda-cupti,nvidia-cuda-nvrtc,nvidia-cuda-runtime,nvidia-cudnn-cu13,nvidia-cufft,nvidia-cufile,nvidia-curand,nvidia-cusolver,nvidia-cusparse,nvidia-cusparselt-cu13,nvidia-nccl-cu13,nvidia-nvjitlink,nvidia-nvshmem-cu13,nvidia-nvtx"
+PREFER_WHEELS="torch,torchsde,torchvision,torchaudio,triton,ziglang,numpy,scipy,pillow,av,tokenizers,safetensors,sentencepiece,pydantic-core,kornia-rs,comfy-angle,blake3,glfw,yarl,multidict,frozenlist,greenlet,charset-normalizer,regex,psutil,PyYAML,pyyaml,hf-xet,cffi,cryptography,pynacl,comfy-kitchen,comfy-aimdo,uv,matrix-nio,GitPython,PyGithub,cuda-bindings,nvidia-cublas,nvidia-cuda-cupti,nvidia-cuda-nvrtc,nvidia-cuda-runtime,nvidia-cudnn-cu13,nvidia-cufft,nvidia-cufile,nvidia-curand,nvidia-cusolver,nvidia-cusparse,nvidia-cusparselt-cu13,nvidia-nccl-cu13,nvidia-nvjitlink,nvidia-nvshmem-cu13,nvidia-nvtx"
 
 # Keep this script as the single update point for Python dependency source generation.
 set +e

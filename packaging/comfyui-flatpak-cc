@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ZIG=/app/lib/python3.13/site-packages/ziglang/zig
+SDK_INCLUDE=/app/share/comfyui-flatpak/include
+PYTHON_INCLUDE=$SDK_INCLUDE/python3.13
+
+if [ ! -x "$ZIG" ]; then
+  echo "Bundled Zig compiler not found: $ZIG" >&2
+  exit 127
+fi
+
+# Triton links its runtime CUDA bridge against the host NVIDIA driver. Zig's
+# linker does not resolve GNU's -l:filename form reliably through the versioned
+# Flatpak GL extension path, so pass the actual library path instead.
+CUDA_LIB="$(find /usr/lib/x86_64-linux-gnu/GL -path '*/lib/libcuda.so.1' -print -quit 2>/dev/null || true)"
+
+args=()
+for arg in "$@"; do
+  case "$arg" in
+    -I/usr/include/python3.13)
+      args+=("-I$PYTHON_INCLUDE" "-I$SDK_INCLUDE")
+      ;;
+    -l:libcuda.so.1)
+      if [ -z "$CUDA_LIB" ]; then
+        echo "NVIDIA libcuda.so.1 was not found in the Flatpak GL extension" >&2
+        exit 1
+      fi
+      args+=("$CUDA_LIB")
+      ;;
+    *)
+      args+=("$arg")
+      ;;
+  esac
+done
+
+exec "$ZIG" cc "${args[@]}"
