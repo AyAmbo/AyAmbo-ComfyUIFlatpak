@@ -8,7 +8,7 @@ License: GPL-3.0-or-later.
 
 ## What is included
 
-- ComfyUI pinned to `dec5d9450a5290bcf63430409ea41018e67f41c3` (`0.30.2`).
+- ComfyUI pinned to `169fcf35a2fc163fec31338b816503ddac0d3fcf` (`0.34.2`).
 - Freedesktop runtime/SDK `25.08`.
 - PyTorch CUDA wheel stack (`torch 2.13.0` with CUDA 13 wheels).
 - ComfyUI-Manager enabled by default.
