@@ -8,7 +8,7 @@ License: GPL-3.0-or-later.
 
 ## What is included
 
-- ComfyUI pinned to `169fcf35a2fc163fec31338b816503ddac0d3fcf` (`0.34.2`).
+- ComfyUI pinned to `40c4fcdf513a4523e39d54a9d391908af8df8171` (`0.35.0`).
 - Freedesktop runtime/SDK `25.08`.
 - PyTorch CUDA wheel stack (`torch 2.13.0` with CUDA 13 wheels).
 - ComfyUI-Manager enabled by default.
@@ -27,22 +27,29 @@ io.github.AyAmbo.ComfyUIFlatpak
 
 ## Install the release bundle
 
-Download all split release assets into the same folder:
+Packaging release **v0.5** contains ComfyUI **0.35.0** (not ComfyUI Desktop).
+See [the beginner install/upgrade and backup guide](packaging/INSTALL.md).
+Stop ComfyUI and back up `~/.var/app/io.github.AyAmbo.ComfyUIFlatpak` before upgrading.
+Reinstalling keeps data; do not use `--delete-data` for an upgrade.
+
+Download all split release assets into a new, empty folder (do not mix releases):
 
 ```text
 AyAmbo-ComfyUIFlatpak.flatpak.zst.part-*
 AyAmbo-ComfyUIFlatpak.flatpak.zst.parts.sha256
 AyAmbo-ComfyUIFlatpak.flatpak.zst.sha256
+AyAmbo-ComfyUIFlatpak.flatpak.sha256
 ```
 
-Verify, join, decompress, and install:
+Verify, join, decompress, and install. Stop if any checksum fails:
 
 ```bash
-sha256sum -c AyAmbo-ComfyUIFlatpak.flatpak.zst.parts.sha256
-cat AyAmbo-ComfyUIFlatpak.flatpak.zst.part-* > AyAmbo-ComfyUIFlatpak.flatpak.zst
-sha256sum -c AyAmbo-ComfyUIFlatpak.flatpak.zst.sha256
-zstd -d -f AyAmbo-ComfyUIFlatpak.flatpak.zst
-flatpak install --user --reinstall ./AyAmbo-ComfyUIFlatpak.flatpak
+sha256sum -c AyAmbo-ComfyUIFlatpak.flatpak.zst.parts.sha256 && \
+cat AyAmbo-ComfyUIFlatpak.flatpak.zst.part-* > AyAmbo-ComfyUIFlatpak.flatpak.zst && \
+sha256sum -c AyAmbo-ComfyUIFlatpak.flatpak.zst.sha256 && \
+zstd -d AyAmbo-ComfyUIFlatpak.flatpak.zst && \
+sha256sum -c AyAmbo-ComfyUIFlatpak.flatpak.sha256 && \
+flatpak install --user --reinstall ./AyAmbo-ComfyUIFlatpak.flatpak && \
 flatpak run io.github.AyAmbo.ComfyUIFlatpak
 ```
 
@@ -89,11 +96,22 @@ Flatpak usually installs matching GL extensions automatically when available. If
 flatpak install flathub org.freedesktop.Platform.GL.nvidia-595-80//1.4
 ```
 
-Run validation:
+Run validation (creates a separate, retained test profile):
 
 ```bash
 scripts/test-flatpak.sh
 ```
+
+For HTTP/API and a small model-free image graph, start a separate profile and run:
+
+```bash
+flatpak run io.github.AyAmbo.ComfyUIFlatpak --profile http-smoke --port 8189
+# In another terminal, from the source folder:
+python3 scripts/api-smoke-test.py --url http://127.0.0.1:8189
+```
+
+These are smoke checks, not verification of all models, custom nodes or workflows.
+See [release notes](RELEASE_NOTES.md) for the exact checks and limitations.
 
 ## Sandboxed data locations
 
@@ -153,6 +171,19 @@ Check helper tools:
 flatpak run --command=comfyui-pip io.github.AyAmbo.ComfyUIFlatpak --version
 flatpak run --command=comfyui-uv io.github.AyAmbo.ComfyUIFlatpak --version
 ```
+
+The `comfyui-uv pip install/uninstall/sync/list/freeze/show` commands target the
+writable Python prefix for the selected profile. For example:
+
+```bash
+flatpak run --env=COMFYUI_FLATPAK_PROFILE=testing --command=comfyui-uv io.github.AyAmbo.ComfyUIFlatpak pip install humanize
+flatpak run --env=COMFYUI_FLATPAK_PROFILE=testing --command=comfyui-uv io.github.AyAmbo.ComfyUIFlatpak pip list
+```
+
+`uv pip check/tree` do not support a prefix selector; those read-only commands
+inspect the system interpreter's packages and may omit `/app` and profile packages.
+Use `comfyui-pip check` for the app/profile Python environment instead. `pip --help`
+and `pip compile` retain uv's normal argument handling. User package overrides remain allowed.
 
 Disable automatic requirement installation for one run:
 
@@ -214,15 +245,23 @@ Iterate/build locally:
 scripts/build-incremental.sh
 scripts/install-local.sh
 scripts/test-flatpak.sh
+scripts/test-comfyui-flatpak-uv.sh
+python3 scripts/test-native-wheels.py
 ```
+
+The generator explicitly selects Linux x86_64 native wheels for `comfy-kitchen` and
+`comfy-aimdo`: their universal wheels omit the CUDA and DynamicVRAM libraries.
+`scripts/check_native_wheels.py` rejects those stub wheels after generation.
 
 Create release bundle:
 
 ```bash
-scripts/make-bundle.sh
+scripts/make-bundle.sh ../AyAmbo-ComfyUIFlatpak-v0.35.0-local-test
 ```
 
-Outputs are written to `release/`:
+The optional output directory defaults to `release/` and must be empty. Earlier
+release files are never deleted; the existing build/download cache is reused.
+Outputs include:
 
 ```text
 AyAmbo-ComfyUIFlatpak.flatpak
@@ -234,7 +273,9 @@ AyAmbo-ComfyUIFlatpak.flatpak.zst.part-*
 INSTALL.md
 ```
 
-Upload the `.part-*`, `.zst.sha256`, `.parts.sha256`, and `INSTALL.md` files to GitHub Releases.
+Upload the `.part-*`, `.zst.sha256`, `.parts.sha256`, `.flatpak.sha256`, and `INSTALL.md`
+files to GitHub Releases, not the full `.flatpak` or `.zst`. Parts are below 2 GB;
+the bundler verifies both recombined compressed and decompressed SHA-256 hashes.
 
 ## Modify/update
 

@@ -38,6 +38,8 @@ set +e
   --output "$OUT" \
   --runtime org.freedesktop.Sdk//25.08 \
   --prefer-wheels "$PREFER_WHEELS" \
+  --artifact-policy comfy-kitchen=platform \
+  --artifact-policy comfy-aimdo=platform \
   --wheel-arches x86_64 \
   --ignore-installed pip,setuptools,packaging,wheel \
   --checker-data
@@ -59,4 +61,7 @@ if [ ! -f "$OUT.json" ]; then
   exit 1
 fi
 
+# --prefer-wheels alone still prefers universal wheels when PyPI offers both.
+# Those two universal wheels omit the native CUDA/DynamicVRAM libraries.
+python3 scripts/check_native_wheels.py "$OUT.json"
 echo "Generated $OUT.json"

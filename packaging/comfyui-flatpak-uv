@@ -21,7 +21,23 @@ export UV_CACHE_DIR="$CACHE_HOME/uv"
 
 if [ "${1:-}" = "pip" ]; then
   shift
-  exec python3 -m uv pip --system --prefix "$PY_USER_BASE" "$@"
+  SUBCOMMAND="${1:-}"
+  case "$SUBCOMMAND" in
+    install|uninstall|sync|list|freeze|show)
+      shift
+      # These options belong to the subcommand, not the `uv pip` group.
+      exec python3 -m uv pip "$SUBCOMMAND" --system --prefix "$PY_USER_BASE" "$@"
+      ;;
+    check|tree)
+      shift
+      # uv has no --prefix support for these read-only interpreter checks.
+      exec python3 -m uv pip "$SUBCOMMAND" --system "$@"
+      ;;
+    *)
+      # Help, compile and unknown arguments retain uv's own parsing/exit codes.
+      exec python3 -m uv pip "$@"
+      ;;
+  esac
 fi
 
 exec python3 -m uv "$@"

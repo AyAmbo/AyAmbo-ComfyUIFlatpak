@@ -1,10 +1,10 @@
 # Generated/maintained input for the ComfyUI Flatpak Python dependency module.
-# Source: upstream/ComfyUI/requirements.txt at 700821e1364eaab0e8f21c538a2131719fec57bf (v0.28.0)
+# Source: upstream/ComfyUI/requirements.txt at 40c4fcdf513a4523e39d54a9d391908af8df8171 (v0.35.0)
 # Plus full extension support requirements.
 
-comfyui-frontend-package==1.49.6
-comfyui-workflow-templates==0.11.50
-comfyui-embedded-docs==0.5.10
+comfyui-frontend-package==1.51.10
+comfyui-workflow-templates==0.11.57
+comfyui-embedded-docs==0.5.11
 torch
 torchsde
 torchvision
@@ -26,8 +26,8 @@ alembic
 SQLAlchemy>=2.0.0
 filelock
 av>=17.0.0
-comfy-kitchen==0.2.31
-comfy-aimdo==0.4.15
+comfy-kitchen==0.2.33
+comfy-aimdo==0.5.3
 requests
 simpleeval>=1.0.0
 blake3

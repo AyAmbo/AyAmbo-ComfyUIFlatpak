@@ -11,50 +11,33 @@ APP_ID="io.github.AyAmbo.ComfyUIFlatpak"
 BUNDLE="AyAmbo-ComfyUIFlatpak.flatpak"
 ZST_BUNDLE="$BUNDLE.zst"
 PART_PREFIX="$ZST_BUNDLE.part-"
-# GitHub's per-file release asset limit is 2 GiB. Keep parts safely below it.
+# Below both 2 GB (decimal) and GitHub's 2 GiB per-file limit.
 PART_SIZE="1900M"
+OUTPUT_DIR="${1:-release}"
 
-rm -rf repo build-dir release
-mkdir -p release
-: > release/.gitkeep
+# Never delete an earlier bundle or its upload assets. Choose a new directory.
+mkdir -p "$OUTPUT_DIR"
+# Flatpak canonicalizes relative paths using PWD; resolve symlinked checkouts first.
+OUTPUT_DIR="$(cd "$OUTPUT_DIR" && pwd -P)"
+if find "$OUTPUT_DIR" -mindepth 1 ! -name .gitkeep -print -quit | grep -q .; then
+  echo "Output directory is not empty: $OUTPUT_DIR. Pass a new directory as the first argument." >&2
+  exit 1
+fi
+cp packaging/INSTALL.md "$OUTPUT_DIR/INSTALL.md"
 
 flatpak-builder --repo=repo --force-clean build-dir io.github.AyAmbo.ComfyUIFlatpak.yml
-flatpak build-bundle repo "release/$BUNDLE" "$APP_ID"
+flatpak build-bundle repo "$OUTPUT_DIR/$BUNDLE" "$APP_ID"
 
 (
-  cd release
+  cd "$OUTPUT_DIR"
   sha256sum "$BUNDLE" > "$BUNDLE.sha256"
   zstd -19 -T0 -f "$BUNDLE" -o "$ZST_BUNDLE"
   split -b "$PART_SIZE" -d -a 3 "$ZST_BUNDLE" "$PART_PREFIX"
   sha256sum "$ZST_BUNDLE" > "$ZST_BUNDLE.sha256"
   sha256sum ${PART_PREFIX}* > "$ZST_BUNDLE.parts.sha256"
-  cat > INSTALL.md <<'EOF'
-# AyAmbo ComfyUI Flatpak release install
-
-Download all release assets into the same folder:
-
-```text
-AyAmbo-ComfyUIFlatpak.flatpak.zst.part-*
-AyAmbo-ComfyUIFlatpak.flatpak.zst.parts.sha256
-AyAmbo-ComfyUIFlatpak.flatpak.zst.sha256
-```
-
-Verify, join, decompress, and install:
-
-```bash
-sha256sum -c AyAmbo-ComfyUIFlatpak.flatpak.zst.parts.sha256
-cat AyAmbo-ComfyUIFlatpak.flatpak.zst.part-* > AyAmbo-ComfyUIFlatpak.flatpak.zst
-sha256sum -c AyAmbo-ComfyUIFlatpak.flatpak.zst.sha256
-zstd -d -f AyAmbo-ComfyUIFlatpak.flatpak.zst
-flatpak install --user --reinstall ./AyAmbo-ComfyUIFlatpak.flatpak
-flatpak run io.github.AyAmbo.ComfyUIFlatpak
-```
-
-Open ComfyUI at:
-
-```text
-http://127.0.0.1:8188
-```
-EOF
+  sha256sum -c "$ZST_BUNDLE.parts.sha256"
+  # Check concatenation order and decompressed content without another large copy.
+  test "$(cat ${PART_PREFIX}* | sha256sum | cut -d ' ' -f1)" = "$(cut -d ' ' -f1 "$ZST_BUNDLE.sha256")"
+  test "$(cat ${PART_PREFIX}* | zstd -d -c | sha256sum | cut -d ' ' -f1)" = "$(cut -d ' ' -f1 "$BUNDLE.sha256")"
   ls -lh "$BUNDLE" "$BUNDLE.sha256" "$ZST_BUNDLE" "$ZST_BUNDLE.sha256" "$ZST_BUNDLE.parts.sha256" ${PART_PREFIX}* INSTALL.md
 )

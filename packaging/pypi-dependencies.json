@@ -7,13 +7,13 @@
             "name": "python3-comfyui-frontend-package",
             "buildsystem": "simple",
             "build-commands": [
-                "pip3 install --verbose --exists-action=i --no-index --find-links=\"file://${PWD}\" --prefix=${FLATPAK_DEST} \"comfyui-frontend-package==1.49.6\" --no-build-isolation"
+                "pip3 install --verbose --exists-action=i --no-index --find-links=\"file://${PWD}\" --prefix=${FLATPAK_DEST} \"comfyui-frontend-package==1.51.10\" --no-build-isolation"
             ],
             "sources": [
                 {
                     "type": "file",
-                    "url": "https://files.pythonhosted.org/packages/63/cc/34c814d6691fa297ea96d521c6d90dbf187c5bd6062a7029283eb422ff89/comfyui_frontend_package-1.49.6-py3-none-any.whl",
-                    "sha256": "69cef7e67f22854852d1d7be68ff82f27bd4ff4b33de9c643d7eb1339769c421",
+                    "url": "https://files.pythonhosted.org/packages/db/66/0f951eb4a77fff00c093e9796667192812d03dabd836653f6b6295a11a7e/comfyui_frontend_package-1.51.10-py3-none-any.whl",
+                    "sha256": "52e7d299f0b061c1b66217ef7b64dfba176355d9df72528cf4381caa2daeb3fb",
                     "x-checker-data": {
                         "type": "pypi",
                         "name": "comfyui-frontend-package",
@@ -26,13 +26,13 @@
             "name": "python3-comfyui-workflow-templates",
             "buildsystem": "simple",
             "build-commands": [
-                "pip3 install --verbose --exists-action=i --no-index --find-links=\"file://${PWD}\" --prefix=${FLATPAK_DEST} \"comfyui-workflow-templates==0.11.50\" --no-build-isolation"
+                "pip3 install --verbose --exists-action=i --no-index --find-links=\"file://${PWD}\" --prefix=${FLATPAK_DEST} \"comfyui-workflow-templates==0.11.57\" --no-build-isolation"
             ],
             "sources": [
                 {
                     "type": "file",
-                    "url": "https://files.pythonhosted.org/packages/10/33/8e8ae462ef8d4d77ece6a88c8d8ceaacf50e6879e0af50805846c5a4dd74/comfyui_workflow_templates-0.11.50-py3-none-any.whl",
-                    "sha256": "5fccba6a05f6f3bc62b8a9eb8cb1b1e3502ff9b0a756b2d36400ee714df6a518",
+                    "url": "https://files.pythonhosted.org/packages/1e/df/12106a07f991d05f23d9d87000c9515f3b94b2a106d0f5c013d6d501c92c/comfyui_workflow_templates-0.11.57-py3-none-any.whl",
+                    "sha256": "51e9bb307294da3881f126a91b121330e0f8ce20eeafcb2a7f634f14672206b5",
                     "x-checker-data": {
                         "type": "pypi",
                         "name": "comfyui-workflow-templates",
@@ -41,8 +41,8 @@
                 },
                 {
                     "type": "file",
-                    "url": "https://files.pythonhosted.org/packages/9a/d1/b6e140f5c47270c839c7691d73bf9f93a3f3f658ca6649a61650e8ce0d92/comfyui_workflow_templates_core-0.3.326-py3-none-any.whl",
-                    "sha256": "c08ced5d9ef0b5a03b22b7da9dad5037358e549961738ca8d0b5edcc4b13a0eb",
+                    "url": "https://files.pythonhosted.org/packages/7a/24/489449c3a289411c7fa02af6479675e6621af66ee6dc824107d9eb3e103b/comfyui_workflow_templates_core-0.3.337-py3-none-any.whl",
+                    "sha256": "c015888e11a380cc02a7189d4a193dbf3c4bf08e34921a474644b2b1fccef55f",
                     "x-checker-data": {
                         "type": "pypi",
                         "name": "comfyui-workflow-templates-core",
@@ -51,8 +51,8 @@
                 },
                 {
                     "type": "file",
-                    "url": "https://files.pythonhosted.org/packages/c6/e3/3774cfb71ef6fbab10f43404f9e9f6d54cc14c5798b802aed43766acb324/comfyui_workflow_templates_json-0.1.61-py3-none-any.whl",
-                    "sha256": "dfd013583caabfc840f406ba4e6d00714e1c36afc62da8c3a8468317b863a2d4",
+                    "url": "https://files.pythonhosted.org/packages/dc/b5/6f6b4a83f9e5ebdfa0b9c1ef77d0064396678724867837afbf9d7a310d61/comfyui_workflow_templates_json-0.1.72-py3-none-any.whl",
+                    "sha256": "1d3feaeb50bfff4164d9b19abb22131cccce88055aa93fd4ccea19918299f3ce",
                     "x-checker-data": {
                         "type": "pypi",
                         "name": "comfyui-workflow-templates-json",
@@ -71,8 +71,8 @@
                 },
                 {
                     "type": "file",
-                    "url": "https://files.pythonhosted.org/packages/74/a8/45c2987d4f75147c97ff048eed094d7b5748d69ae717e2ec9197eea43532/comfyui_workflow_templates_media_assets_01-0.1.36-py3-none-any.whl",
-                    "sha256": "7652de137c28f5dc722829c7da8d31204f71d571c963d57702562431e83943ee",
+                    "url": "https://files.pythonhosted.org/packages/77/3c/a21845eb72790e92db4eea71724bdc41e2b0f29382f02de3412e671d9b8f/comfyui_workflow_templates_media_assets_01-0.1.43-py3-none-any.whl",
+                    "sha256": "6c868f78eaa05d6dca8761fb1b78c3bf4660abfc74dddbbdffb41f4e069a814d",
                     "x-checker-data": {
                         "type": "pypi",
                         "name": "comfyui-workflow-templates-media-assets-01",
@@ -115,13 +115,13 @@
             "name": "python3-comfyui-embedded-docs",
             "buildsystem": "simple",
             "build-commands": [
-                "pip3 install --verbose --exists-action=i --no-index --find-links=\"file://${PWD}\" --prefix=${FLATPAK_DEST} \"comfyui-embedded-docs==0.5.10\" --no-build-isolation"
+                "pip3 install --verbose --exists-action=i --no-index --find-links=\"file://${PWD}\" --prefix=${FLATPAK_DEST} \"comfyui-embedded-docs==0.5.11\" --no-build-isolation"
             ],
             "sources": [
                 {
                     "type": "file",
-                    "url": "https://files.pythonhosted.org/packages/2f/95/ee4f8fae3a1305958dc5f5a94d09d7da74336dae968716c33c64cdf2301d/comfyui_embedded_docs-0.5.10-py3-none-any.whl",
-                    "sha256": "54f9bb2157a79dce7a68c975ee98be03214f962d41700e17ce194119e863ebb6",
+                    "url": "https://files.pythonhosted.org/packages/63/0f/f30966d7610571f0c1cb1034d4489b91db8afc5399fc1a4d0b8520689f6f/comfyui_embedded_docs-0.5.11-py3-none-any.whl",
+                    "sha256": "0ab3e96253676d05caf84d607b815c43271e50302f3c51ce363cae5479aa697f",
                     "x-checker-data": {
                         "type": "pypi",
                         "name": "comfyui-embedded-docs",
@@ -2268,13 +2268,16 @@
             "name": "python3-comfy-kitchen",
             "buildsystem": "simple",
             "build-commands": [
-                "pip3 install --verbose --exists-action=i --no-index --find-links=\"file://${PWD}\" --prefix=${FLATPAK_DEST} \"comfy-kitchen==0.2.31\" --no-build-isolation"
+                "pip3 install --verbose --exists-action=i --no-index --find-links=\"file://${PWD}\" --prefix=${FLATPAK_DEST} \"comfy-kitchen==0.2.33\" --no-build-isolation"
             ],
             "sources": [
                 {
                     "type": "file",
-                    "url": "https://files.pythonhosted.org/packages/27/d1/e53410260b81610233cb56c2fac1a9f3d39887be3cbb983cd8baa6a07528/comfy_kitchen-0.2.31-py3-none-any.whl",
-                    "sha256": "5117946c30f308cfc73b9c26f723ae3918308bd090e57a8eae298406934aabd6",
+                    "url": "https://files.pythonhosted.org/packages/5f/e1/324966117ea9254ece8dbba0e970a92ec8a33535cbf289a6326d386fdf31/comfy_kitchen-0.2.33-cp312-abi3-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl",
+                    "sha256": "156306814f344f3b004164a863b687d0128f3c0671e43c24f2045b1d55be530f",
+                    "only-arches": [
+                        "x86_64"
+                    ],
                     "x-checker-data": {
                         "type": "pypi",
                         "name": "comfy-kitchen",
@@ -2287,13 +2290,16 @@
             "name": "python3-comfy-aimdo",
             "buildsystem": "simple",
             "build-commands": [
-                "pip3 install --verbose --exists-action=i --no-index --find-links=\"file://${PWD}\" --prefix=${FLATPAK_DEST} \"comfy-aimdo==0.4.15\" --no-build-isolation"
+                "pip3 install --verbose --exists-action=i --no-index --find-links=\"file://${PWD}\" --prefix=${FLATPAK_DEST} \"comfy-aimdo==0.5.3\" --no-build-isolation"
             ],
             "sources": [
                 {
                     "type": "file",
-                    "url": "https://files.pythonhosted.org/packages/c6/f3/9afaba10383d33d72ccef2b973587930cb4c1eb9d36bc260d7b1cd5f53ab/comfy_aimdo-0.4.15-py3-none-any.whl",
-                    "sha256": "1298ace7e1f82db10de69fc2bb8c9136e02c4ed0594f53f50774b57f23cf0771",
+                    "url": "https://files.pythonhosted.org/packages/1a/bc/aa38d79aed78aee21d1186e056f8b8e348c6af78874d6f7ed257a6dddf5d/comfy_aimdo-0.5.3-cp39-abi3-manylinux2014_x86_64.manylinux_2_17_x86_64.whl",
+                    "sha256": "5ddc7e12a2120d3e75e31f6dff52448dd0bd3058277f10f7932e99c20d17ae7a",
+                    "only-arches": [
+                        "x86_64"
+                    ],
                     "x-checker-data": {
                         "type": "pypi",
                         "name": "comfy-aimdo",
