@@ -47,6 +47,15 @@ else
   PY_USER_BASE="$DATA_HOME/python-profiles/$PROFILE_SAFE"
 fi
 
+# Shared lock permits multiple app ports, but excludes explicit profile maintenance.
+# Keep fd 9 open across exec so the lock lives as long as this ComfyUI process.
+mkdir -p "$DATA_ROOT"
+exec 9>"$DATA_ROOT/.flatpak-profile.lock"
+if ! flock -sn 9; then
+  echo "This profile is being maintained. Retry after maintenance finishes." >&2
+  exit 1
+fi
+
 mkdir -p \
   "$DATA_ROOT/models/checkpoints" \
   "$DATA_ROOT/models/configs" \

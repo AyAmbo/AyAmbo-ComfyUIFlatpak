@@ -21,7 +21,7 @@ import comfyui_version
 import torch
 print("python", sys.version)
 print("ComfyUI", comfyui_version.__version__)
-assert comfyui_version.__version__ == "0.35.0"
+assert comfyui_version.__version__ == "0.36.0"
 print("torch", torch.__version__)
 print("cuda available", torch.cuda.is_available())
 assert torch.cuda.is_available(), "CUDA is required by this GPU smoke test"

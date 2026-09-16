@@ -10,7 +10,7 @@ import urllib.request
 
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument("--url", default="http://127.0.0.1:8189")
-parser.add_argument("--expected-version", default="0.35.0")
+parser.add_argument("--expected-version", default="0.36.0")
 args = parser.parse_args()
 
 

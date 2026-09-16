@@ -12,9 +12,11 @@ def add_kernel(x, y, output, size: tl.constexpr):
     tl.store(output + offsets, tl.load(x + offsets) + tl.load(y + offsets))
 
 
-x = torch.ones(256, device="cuda")
-y = torch.ones(256, device="cuda")
-output = torch.empty_like(x)
-add_kernel[(1,)](x, y, output, size=256)
-torch.testing.assert_close(output, x + y)
-print("triton", triton.__version__, "CUDA JIT kernel ok")
+for device in range(torch.cuda.device_count()):
+    torch.cuda.set_device(device)
+    x = torch.ones(256, device=f"cuda:{device}")
+    y = torch.ones(256, device=f"cuda:{device}")
+    output = torch.empty_like(x)
+    add_kernel[(1,)](x, y, output, size=256)
+    torch.testing.assert_close(output, x + y)
+    print("triton", triton.__version__, "CUDA JIT kernel ok on", device)

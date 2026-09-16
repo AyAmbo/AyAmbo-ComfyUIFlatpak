@@ -1,6 +1,15 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+RETRY_ALL=0
+case "${1:-}" in
+  --retry-all) RETRY_ALL=1; shift ;;
+  '') ;;
+  *) echo "Usage: comfyui-install-requirements [--retry-all]" >&2; exit 2 ;;
+esac
+[ "$#" -eq 0 ] || { echo "Unexpected arguments" >&2; exit 2; }
+FAILURES=0
+
 COMFY_ROOT=/app/share/comfyui
 DATA_HOME="${XDG_DATA_HOME:-$HOME/.local/share}"
 CACHE_HOME="${XDG_CACHE_HOME:-$HOME/.cache}"
@@ -51,7 +60,36 @@ for name in [
         pass
 PY
 
-python3 - "$CUSTOM_NODES_DIR" "$STATE_DIR" <<'PY' | while IFS= read -r req; do
+while IFS= read -r req; do
+  [ -f "$req" ] || continue
+  if [ -L "$req" ]; then
+    echo "[ComfyUI Flatpak] Refusing symlink requirement file: $req" >&2
+    FAILURES=1
+    continue
+  fi
+  rel="${req#$CUSTOM_NODES_DIR/}"
+  marker_name="$(printf '%s' "$rel" | sha256sum | awk '{print $1}')"
+  marker="$STATE_DIR/$marker_name.sha256"
+  hash="$(sha256sum "$req" | awk '{print $1}')"
+  if [ "$RETRY_ALL" = 0 ] && [ -f "$marker" ] && [ "$(cat "$marker" 2>/dev/null || true)" = "$hash" ]; then
+    echo "[ComfyUI Flatpak] Requirements unchanged: $rel"
+    continue
+  fi
+
+  # A failed explicit retry must not leave an old success marker behind.
+  if [ "$RETRY_ALL" = 1 ]; then
+    rm -f "$marker"
+  fi
+  echo "[ComfyUI Flatpak] Installing custom-node requirements: $rel"
+  if python3 -m pip install --user --disable-pip-version-check --constraint "$PIN_FILE" -r "$req"; then
+    printf '%s' "$hash" > "$marker"
+    echo "[ComfyUI Flatpak] Installed requirements: $rel"
+  else
+    FAILURES=1
+    echo "[ComfyUI Flatpak] WARNING: Failed to install requirements: $rel" >&2
+    echo "[ComfyUI Flatpak] You can retry manually with: flatpak run --command=comfyui-pip io.github.AyAmbo.ComfyUIFlatpak install -r '$req'" >&2
+  fi
+done < <(python3 - "$CUSTOM_NODES_DIR" "$STATE_DIR" <<'PY'
 import os, sys
 root, state = sys.argv[1:3]
 skip_dirs = {'.git', '__pycache__', '.cache', 'venv', '.venv', 'env'}
@@ -66,22 +104,5 @@ for dirpath, dirnames, filenames in os.walk(root):
         if lower == 'requirements.txt' or (lower.startswith('requirements') and lower.endswith('.txt')):
             print(os.path.join(dirpath, filename))
 PY
-  [ -f "$req" ] || continue
-  rel="${req#$CUSTOM_NODES_DIR/}"
-  marker_name="$(printf '%s' "$rel" | sha256sum | awk '{print $1}')"
-  marker="$STATE_DIR/$marker_name.sha256"
-  hash="$(sha256sum "$req" | awk '{print $1}')"
-  if [ -f "$marker" ] && [ "$(cat "$marker" 2>/dev/null || true)" = "$hash" ]; then
-    echo "[ComfyUI Flatpak] Requirements unchanged: $rel"
-    continue
-  fi
-
-  echo "[ComfyUI Flatpak] Installing custom-node requirements: $rel"
-  if python3 -m pip install --user --disable-pip-version-check --constraint "$PIN_FILE" -r "$req"; then
-    printf '%s' "$hash" > "$marker"
-    echo "[ComfyUI Flatpak] Installed requirements: $rel"
-  else
-    echo "[ComfyUI Flatpak] WARNING: Failed to install requirements: $rel" >&2
-    echo "[ComfyUI Flatpak] You can retry manually with: flatpak run --command=comfyui-pip io.github.AyAmbo.ComfyUIFlatpak install -r '$req'" >&2
-  fi
-done
+)
+exit "$FAILURES"

@@ -1,0 +1,215 @@
+#!/usr/bin/env python3
+"""Explicit, profile-local maintenance. Never delete nodes or package backups."""
+import argparse
+import contextlib
+import fcntl
+import os
+from pathlib import Path
+import re
+import subprocess
+import sys
+import uuid
+from datetime import datetime, timezone
+
+
+class RepairError(Exception):
+    pass
+
+
+def safe_path(path):
+    path = Path(os.path.abspath(path))
+    if path == Path('/') or path.resolve() != path:
+        raise RepairError(f'Refusing root or symlink path: {path}')
+    return path
+
+
+def child_name(name):
+    if not name or name in ('.', '..') or '/' in name or '\\' in name:
+        raise RepairError(f'Expected a single directory name: {name!r}')
+    return name
+
+
+def profile_paths(profile):
+    profile = re.sub(r'[^A-Za-z0-9_.-]', '_', profile).strip('_') or 'default'
+    if profile in ('.', '..'):
+        raise RepairError('Unsafe profile name')
+    home_value = os.environ.get('XDG_DATA_HOME', str(Path.home() / '.local/share'))
+    if not home_value or not Path(home_value).is_absolute():
+        raise RepairError('XDG_DATA_HOME must be a nonempty absolute path')
+    home = safe_path(home_value)
+    if profile == 'default':
+        data, packages = home / 'ComfyUI', home / 'python'
+    else:
+        data, packages = home / 'ComfyUI-profiles' / profile, home / 'python-profiles' / profile
+    nodes = data / 'custom_nodes'
+    for key, expected in [('COMFYUI_FLATPAK_DATA_ROOT', data),
+                          ('COMFYUI_FLATPAK_PY_USER_BASE', packages),
+                          ('COMFYUI_FLATPAK_CUSTOM_NODES_DIR', nodes)]:
+        if key in os.environ and (not os.environ[key] or safe_path(os.environ[key]) != expected):
+            raise RepairError(f'{key}: repair requires the standard selected-profile path; unset this override')
+    for path in (data, packages, nodes):
+        safe_path(path)
+    return profile, data, packages, home / 'comfyui-flatpak-package-backups' / profile
+
+
+@contextlib.contextmanager
+def maintenance_lock(data):
+    data.mkdir(parents=True, exist_ok=True)
+    lock = safe_path(data / '.flatpak-profile.lock')
+    fd = os.open(lock, os.O_CREAT | os.O_RDWR | os.O_NOFOLLOW, 0o600)
+    try:
+        try:
+            fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError:
+            raise RepairError('This profile is running or being maintained. Stop it first; no processes were killed.') from None
+        yield
+    finally:
+        os.close(fd)
+
+
+def clear_markers(data):
+    state = safe_path(data / 'user' / '__flatpak_requirements')
+    if state.exists():
+        for marker in state.glob('*.sha256'):
+            safe_path(marker)
+            if not marker.is_file():
+                raise RepairError(f'Not a regular requirements marker: {marker}')
+        for marker in state.glob('*.sha256'):
+            marker.unlink()
+
+
+def requirements(profile):
+    _, data, _, _ = profile_paths(profile)
+    state = safe_path(data / 'user' / '__flatpak_requirements')
+    safe_path(state / 'pinned-packages.txt')
+    if state.exists():
+        for marker in state.glob('*.sha256'):
+            safe_path(marker)
+    env = dict(os.environ, COMFYUI_FLATPAK_PROFILE=profile,
+               COMFYUI_FLATPAK_AUTO_INSTALL_REQUIREMENTS='1')
+    print('Retrying all custom-node requirements (not force-reinstalling or upgrading satisfied packages).', flush=True)
+    status = subprocess.call(['/app/bin/comfyui-install-requirements', '--retry-all'], env=env)
+    if status:
+        raise RepairError('Some requirements failed. Successful installs remain; fix the reported errors and run requirements again.')
+
+
+def move(source, destination):
+    safe_path(source)
+    safe_path(destination)
+    if not source.is_dir():
+        raise RepairError(f'Not a directory: {source}')
+    if destination.exists():
+        raise RepairError(f'Destination exists; nothing overwritten: {destination}')
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    source.rename(destination)
+    print(f'Moved: {source}\n    to: {destination}', flush=True)
+
+
+def backup_name():
+    return datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ-') + uuid.uuid4().hex[:12]
+
+
+def git(node, *args):
+    return subprocess.run(['git', '-C', str(node), *args], text=True,
+                          stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True).stdout.strip()
+
+
+def update_node(node):
+    safe_path(node)
+    if not node.is_dir() or not (node / '.git').is_dir() or (node / '.git').is_symlink():
+        raise RepairError(f'{node.name}: not an ordinary Git directory; skipped')
+    if Path(git(node, 'rev-parse', '--show-toplevel')) != node:
+        raise RepairError(f'{node.name}: Git root mismatch; skipped')
+    common = Path(git(node, 'rev-parse', '--path-format=absolute', '--git-common-dir'))
+    if common != node / '.git' or any(p.is_symlink() for p in common.rglob('*')):
+        raise RepairError(f'{node.name}: shared or symlinked Git metadata; skipped')
+    if git(node, 'status', '--porcelain', '--untracked-files=all', '--ignore-submodules=none'):
+        raise RepairError(f'{node.name}: dirty Git node; skipped')
+    # Do not run extension-defined Git hooks or recurse into submodules.
+    git(node, '-c', 'core.hooksPath=/dev/null', '-c', 'submodule.recurse=false',
+        '-c', 'pull.rebase=false', 'pull', '--ff-only', '--no-recurse-submodules')
+    print(f'Updated: {node.name}')
+
+
+def run(args):
+    profile, data, packages, backups = profile_paths(args.profile)
+    print(f'Profile: {profile}', flush=True)
+    with maintenance_lock(data):
+        if args.command == 'requirements':
+            requirements(profile)
+        elif args.command == 'reset-packages':
+            safe_path(backups)
+            clear_markers(data)
+            if packages.exists():
+                destination = backups / backup_name()
+                move(packages, destination)
+                print(f'Backup name: {destination.name}\nRestore: comfyui-repair --profile {profile} restore-packages {destination.name}', flush=True)
+            print('Third-party packages absent from node requirements may need manual reinstall or restoration.', flush=True)
+            requirements(profile)
+        elif args.command == 'restore-packages':
+            source = backups / child_name(args.backup)
+            safe_path(source)
+            if not source.is_dir():
+                raise RepairError(f'Backup not found: {source}')
+            # Preserve the current layer too; restoration never overwrites it.
+            clear_markers(data)
+            if packages.exists():
+                move(packages, backups / backup_name())
+            move(source, packages)
+            print('Package backup restored. Requirements markers cleared; no dependency installs were run.')
+        elif args.command == 'nodes':
+            nodes = safe_path(data / 'custom_nodes')
+            disabled = safe_path(data / '.flatpak-disabled-nodes')
+            if args.action == 'list':
+                for label, root in [('enabled', nodes), ('disabled', disabled)]:
+                    if root.exists():
+                        for node in sorted(root.iterdir()):
+                            print(f'{label}: {node.name}' + (' [symlink; maintenance refused]' if node.is_symlink() else ''))
+            elif args.action == 'disable':
+                move(nodes / child_name(args.name), disabled / child_name(args.name))
+            elif args.action == 'restore':
+                move(disabled / child_name(args.name), nodes / child_name(args.name))
+            elif args.action == 'update':
+                if args.all:
+                    targets = sorted(nodes.iterdir()) if nodes.exists() else []
+                else:
+                    targets = [nodes / child_name(args.name)]
+                failures = []
+                for node in targets:
+                    try:
+                        update_node(node)
+                    except (RepairError, subprocess.CalledProcessError) as error:
+                        detail = error.stderr.strip() if isinstance(error, subprocess.CalledProcessError) else str(error)
+                        print(f'{node.name}: {detail}', file=sys.stderr)
+                        failures.append(node.name)
+                if failures:
+                    raise RepairError('Not updated: ' + ', '.join(failures))
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__, epilog='Stop the selected profile first. Backups are retained. No permanent node deletion is provided.')
+    parser.add_argument('--profile', default=os.environ.get('COMFYUI_FLATPAK_PROFILE', 'default'))
+    commands = parser.add_subparsers(dest='command', required=True)
+    commands.add_parser('requirements', help='retry all requirements, ignoring success markers; no forced reinstall')
+    commands.add_parser('reset-packages', help='back up Python packages, clear markers and retry requirements')
+    restore = commands.add_parser('restore-packages', help='restore a named package backup, preserving current packages in another backup')
+    restore.add_argument('backup', help='backup directory name printed by reset-packages')
+    nodes = commands.add_parser('nodes', help='list, update, disable or restore custom nodes').add_subparsers(dest='action', required=True)
+    nodes.add_parser('list')
+    update = nodes.add_parser('update', help='fast-forward clean ordinary Git nodes only')
+    targets = update.add_mutually_exclusive_group(required=True)
+    targets.add_argument('name', nargs='?')
+    targets.add_argument('--all', action='store_true', help='explicitly try every node; skipped/failed nodes return nonzero')
+    for action in ('disable', 'restore'):
+        nodes.add_parser(action).add_argument('name')
+    args = parser.parse_args()
+    try:
+        run(args)
+    except (RepairError, OSError, subprocess.CalledProcessError) as error:
+        print(f'Repair failed: {error}', file=sys.stderr)
+        return 1
+    return 0
+
+
+if __name__ == '__main__':
+    sys.exit(main())

@@ -15,7 +15,7 @@ PART_PREFIX="$ZST_BUNDLE.part-"
 PART_SIZE="1900M"
 OUTPUT_DIR="${1:-release}"
 
-# Never delete an earlier bundle or its upload assets. Choose a new directory.
+# Require an empty destination to avoid mixing release parts.
 mkdir -p "$OUTPUT_DIR"
 # Flatpak canonicalizes relative paths using PWD; resolve symlinked checkouts first.
 OUTPUT_DIR="$(cd "$OUTPUT_DIR" && pwd -P)"
@@ -23,8 +23,6 @@ if find "$OUTPUT_DIR" -mindepth 1 ! -name .gitkeep -print -quit | grep -q .; the
   echo "Output directory is not empty: $OUTPUT_DIR. Pass a new directory as the first argument." >&2
   exit 1
 fi
-cp packaging/INSTALL.md "$OUTPUT_DIR/INSTALL.md"
-
 flatpak-builder --repo=repo --force-clean build-dir io.github.AyAmbo.ComfyUIFlatpak.yml
 flatpak build-bundle repo "$OUTPUT_DIR/$BUNDLE" "$APP_ID"
 
@@ -39,5 +37,5 @@ flatpak build-bundle repo "$OUTPUT_DIR/$BUNDLE" "$APP_ID"
   # Check concatenation order and decompressed content without another large copy.
   test "$(cat ${PART_PREFIX}* | sha256sum | cut -d ' ' -f1)" = "$(cut -d ' ' -f1 "$ZST_BUNDLE.sha256")"
   test "$(cat ${PART_PREFIX}* | zstd -d -c | sha256sum | cut -d ' ' -f1)" = "$(cut -d ' ' -f1 "$BUNDLE.sha256")"
-  ls -lh "$BUNDLE" "$BUNDLE.sha256" "$ZST_BUNDLE" "$ZST_BUNDLE.sha256" "$ZST_BUNDLE.parts.sha256" ${PART_PREFIX}* INSTALL.md
+  ls -lh "$BUNDLE" "$BUNDLE.sha256" "$ZST_BUNDLE" "$ZST_BUNDLE.sha256" "$ZST_BUNDLE.parts.sha256" ${PART_PREFIX}*
 )

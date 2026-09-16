@@ -8,7 +8,7 @@ License: GPL-3.0-or-later.
 
 ## What is included
 
-- ComfyUI pinned to `40c4fcdf513a4523e39d54a9d391908af8df8171` (`0.35.0`).
+- ComfyUI pinned to `ee71d5c4993f29086b27fde1629a945ae48425bf` (`0.36.0`).
 - Freedesktop runtime/SDK `25.08`.
 - PyTorch CUDA wheel stack (`torch 2.13.0` with CUDA 13 wheels).
 - ComfyUI-Manager enabled by default.
@@ -19,18 +19,23 @@ License: GPL-3.0-or-later.
 - Sandboxed writable data/config/cache under Flatpak app data.
 - No model weights bundled.
 
-App ID:
+## Install or update
 
-```text
-io.github.AyAmbo.ComfyUIFlatpak
+Packaging release **v0.6** contains ComfyUI **0.36.0**, for x86_64 Linux (not ComfyUI Desktop).
+Install Flatpak and zstd with your distribution's package manager. On Debian/Ubuntu:
+
+```bash
+sudo apt install flatpak zstd
+flatpak remote-add --user --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
+flatpak install --user flathub org.freedesktop.Platform//25.08
 ```
 
-## Install the release bundle
-
-Packaging release **v0.5** contains ComfyUI **0.35.0** (not ComfyUI Desktop).
-See [the beginner install/upgrade and backup guide](packaging/INSTALL.md).
-Stop ComfyUI and back up `~/.var/app/io.github.AyAmbo.ComfyUIFlatpak` before upgrading.
-Reinstalling keeps data; do not use `--delete-data` for an upgrade.
+Before upgrading, stop ComfyUI and copy the whole hidden folder
+`~/.var/app/io.github.AyAmbo.ComfyUIFlatpak` to a safe location. Back up externally
+linked models separately. Reinstalling keeps data, but updates can change it;
+keep the previous release and backup for rollback. Do not use `--delete-data`
+for an upgrade. Allow about 10 GB for the downloaded parts and reconstructed
+files, plus space for the installed app/runtime.
 
 Download all split release assets into a new, empty folder (do not mix releases):
 
@@ -44,12 +49,12 @@ AyAmbo-ComfyUIFlatpak.flatpak.sha256
 Verify, join, decompress, and install. Stop if any checksum fails:
 
 ```bash
-sha256sum -c AyAmbo-ComfyUIFlatpak.flatpak.zst.parts.sha256 && \
-cat AyAmbo-ComfyUIFlatpak.flatpak.zst.part-* > AyAmbo-ComfyUIFlatpak.flatpak.zst && \
-sha256sum -c AyAmbo-ComfyUIFlatpak.flatpak.zst.sha256 && \
-zstd -d AyAmbo-ComfyUIFlatpak.flatpak.zst && \
-sha256sum -c AyAmbo-ComfyUIFlatpak.flatpak.sha256 && \
-flatpak install --user --reinstall ./AyAmbo-ComfyUIFlatpak.flatpak && \
+sha256sum -c AyAmbo-ComfyUIFlatpak.flatpak.zst.parts.sha256 &&
+cat AyAmbo-ComfyUIFlatpak.flatpak.zst.part-* > AyAmbo-ComfyUIFlatpak.flatpak.zst &&
+sha256sum -c AyAmbo-ComfyUIFlatpak.flatpak.zst.sha256 &&
+zstd -d AyAmbo-ComfyUIFlatpak.flatpak.zst &&
+sha256sum -c AyAmbo-ComfyUIFlatpak.flatpak.sha256 &&
+flatpak install --user --reinstall ./AyAmbo-ComfyUIFlatpak.flatpak &&
 flatpak run io.github.AyAmbo.ComfyUIFlatpak
 ```
 
@@ -59,11 +64,9 @@ Open:
 http://127.0.0.1:8188
 ```
 
-Reinstall/update while keeping your data:
-
-```bash
-flatpak install --user --reinstall ./AyAmbo-ComfyUIFlatpak.flatpak
-```
+If you already have the full `.flatpak`, verify its `.sha256` and use the
+same `flatpak install --user --reinstall` command above. The startup log should
+show ComfyUI **0.36.0**. Test your important workflows after updating.
 
 Uninstall but keep data:
 
@@ -81,14 +84,7 @@ flatpak uninstall --user --delete-data io.github.AyAmbo.ComfyUIFlatpak
 
 For GPU use, install a host NVIDIA driver new enough for the bundled CUDA/PyTorch stack and the matching Flatpak NVIDIA GL extension.
 
-This package was validated on:
-
-```text
-NVIDIA driver 595.80
-org.freedesktop.Platform.GL.nvidia-595-80//1.4
-2x NVIDIA GeForce RTX 3060
-torch.cuda.is_available() == True
-```
+GPU smoke tests were run on two RTX 3060 cards with NVIDIA driver 595.80.
 
 Flatpak usually installs matching GL extensions automatically when available. If needed, install manually, for example:
 
@@ -96,56 +92,23 @@ Flatpak usually installs matching GL extensions automatically when available. If
 flatpak install flathub org.freedesktop.Platform.GL.nvidia-595-80//1.4
 ```
 
-Run validation (creates a separate, retained test profile):
+## Data and extensions
 
-```bash
-scripts/test-flatpak.sh
-```
+App data lives under `~/.var/app/io.github.AyAmbo.ComfyUIFlatpak/`:
 
-For HTTP/API and a small model-free image graph, start a separate profile and run:
+- `data/ComfyUI/`: models, custom nodes, input, output and user settings.
+- `data/python/`: user-installed Python packages.
+- `cache/`: pip, uv, Hugging Face, torch and other caches.
 
-```bash
-flatpak run io.github.AyAmbo.ComfyUIFlatpak --profile http-smoke --port 8189
-# In another terminal, from the source folder:
-python3 scripts/api-smoke-test.py --url http://127.0.0.1:8189
-```
-
-These are smoke checks, not verification of all models, custom nodes or workflows.
-See [release notes](RELEASE_NOTES.md) for the exact checks and limitations.
-
-## Sandboxed data locations
-
-Default profile:
-
-```text
-~/.var/app/io.github.AyAmbo.ComfyUIFlatpak/data/ComfyUI/models
-~/.var/app/io.github.AyAmbo.ComfyUIFlatpak/data/ComfyUI/custom_nodes
-~/.var/app/io.github.AyAmbo.ComfyUIFlatpak/data/ComfyUI/input
-~/.var/app/io.github.AyAmbo.ComfyUIFlatpak/data/ComfyUI/output
-~/.var/app/io.github.AyAmbo.ComfyUIFlatpak/data/ComfyUI/user
-~/.var/app/io.github.AyAmbo.ComfyUIFlatpak/data/python
-~/.var/app/io.github.AyAmbo.ComfyUIFlatpak/cache/pip
-~/.var/app/io.github.AyAmbo.ComfyUIFlatpak/cache/uv
-~/.var/app/io.github.AyAmbo.ComfyUIFlatpak/cache/huggingface
-~/.var/app/io.github.AyAmbo.ComfyUIFlatpak/cache/torch
-```
-
-`/app` is immutable. Extension Python packages are installed into the app-private Flatpak data area, not into host Python.
+`/app` is immutable. Extension dependencies are installed into app-private data,
+not host Python, and user packages may override bundled ones. Only install custom
+nodes and run workflows from sources you trust.
 
 ## Extension dependency install / repair commands
 
-The launcher automatically scans custom nodes for:
-
-```text
-requirements.txt
-requirements*.txt
-```
-
-and installs changed requirements into the sandboxed Python user layer. Hash markers are stored under:
-
-```text
-~/.var/app/io.github.AyAmbo.ComfyUIFlatpak/data/ComfyUI/user/__flatpak_requirements
-```
+The launcher installs changed `requirements*.txt` files from custom nodes.
+Success markers live in `data/ComfyUI/user/__flatpak_requirements`; use the repair
+command below to retry requirements without manually clearing them.
 
 Manually install a missing package:
 
@@ -159,19 +122,6 @@ Install from an extension requirement file:
 flatpak run --command=comfyui-pip io.github.AyAmbo.ComfyUIFlatpak install -r ~/.var/app/io.github.AyAmbo.ComfyUIFlatpak/data/ComfyUI/custom_nodes/EXT/requirements.txt
 ```
 
-Run the auto requirements installer manually:
-
-```bash
-flatpak run --command=comfyui-install-requirements io.github.AyAmbo.ComfyUIFlatpak
-```
-
-Check helper tools:
-
-```bash
-flatpak run --command=comfyui-pip io.github.AyAmbo.ComfyUIFlatpak --version
-flatpak run --command=comfyui-uv io.github.AyAmbo.ComfyUIFlatpak --version
-```
-
 The `comfyui-uv pip install/uninstall/sync/list/freeze/show` commands target the
 writable Python prefix for the selected profile. For example:
 
@@ -183,7 +133,7 @@ flatpak run --env=COMFYUI_FLATPAK_PROFILE=testing --command=comfyui-uv io.github
 `uv pip check/tree` do not support a prefix selector; those read-only commands
 inspect the system interpreter's packages and may omit `/app` and profile packages.
 Use `comfyui-pip check` for the app/profile Python environment instead. `pip --help`
-and `pip compile` retain uv's normal argument handling. User package overrides remain allowed.
+and `pip compile` use uv's normal argument handling.
 
 Disable automatic requirement installation for one run:
 
@@ -191,37 +141,56 @@ Disable automatic requirement installation for one run:
 flatpak run --env=COMFYUI_FLATPAK_AUTO_INSTALL_REQUIREMENTS=0 io.github.AyAmbo.ComfyUIFlatpak
 ```
 
+## Repair packages or manage custom nodes
+
+Stop the selected profile before running maintenance. The running-profile lock
+requires v0.6 or newer; close older instances manually.
+Use `--profile NAME` before the subcommand for a named profile; omit it for default.
+
+```bash
+flatpak run --command=comfyui-repair io.github.AyAmbo.ComfyUIFlatpak --help
+flatpak run --command=comfyui-repair io.github.AyAmbo.ComfyUIFlatpak requirements
+flatpak run --command=comfyui-repair io.github.AyAmbo.ComfyUIFlatpak nodes list
+flatpak run --command=comfyui-repair io.github.AyAmbo.ComfyUIFlatpak nodes update NODE
+flatpak run --command=comfyui-repair io.github.AyAmbo.ComfyUIFlatpak nodes disable NODE
+flatpak run --command=comfyui-repair io.github.AyAmbo.ComfyUIFlatpak nodes restore NODE
+```
+
+`requirements` retries every discovered requirements file, ignoring success markers;
+it does not force reinstall or upgrade satisfied packages. `nodes update --all`
+explicitly tries all nodes. Updates are fast-forward-only for clean ordinary Git
+folders; dirty, non-Git and unsafe paths are skipped with a nonzero result.
+Disable moves a node outside `custom_nodes` to `.flatpak-disabled-nodes`; restore
+refuses collisions. No permanent deletion is provided.
+
+For a broken Python user layer, explicitly back it up and rebuild from requirements:
+
+```bash
+flatpak run --command=comfyui-repair io.github.AyAmbo.ComfyUIFlatpak reset-packages
+flatpak run --command=comfyui-repair io.github.AyAmbo.ComfyUIFlatpak restore-packages BACKUP_NAME
+```
+
+Reset prints the backup path/name and retries requirements. Models, workflows,
+configuration and node code are not moved. Packages absent from requirements may
+need manual reinstall or restoration. Backups are retained under the app data
+`comfyui-flatpak-package-backups/PROFILE`; restore also backs up the current Python
+layer and clears markers, without installing anything. Repair supports only the
+standard profile paths.
+
 ## Multiple ports / GPUs / profiles
 
-Same sandbox data, different ports:
-
-```bash
-flatpak run io.github.AyAmbo.ComfyUIFlatpak --port 8188
-flatpak run io.github.AyAmbo.ComfyUIFlatpak --port 8189
-```
-
-Different GPU per instance:
-
-```bash
-flatpak run --env=CUDA_VISIBLE_DEVICES=0 io.github.AyAmbo.ComfyUIFlatpak --port 8188
-flatpak run --env=CUDA_VISIBLE_DEVICES=1 io.github.AyAmbo.ComfyUIFlatpak --port 8189
-```
-
-Safer separate profiles, with separate data/config/cache/Python layers:
+Use `--port` to run another instance. For separate data, configuration and Python
+packages on different GPUs:
 
 ```bash
 flatpak run --env=CUDA_VISIBLE_DEVICES=0 io.github.AyAmbo.ComfyUIFlatpak --profile gpu0 --port 8188
 flatpak run --env=CUDA_VISIBLE_DEVICES=1 io.github.AyAmbo.ComfyUIFlatpak --profile gpu1 --port 8189
 ```
 
-Profile data lives under:
-
-```text
-~/.var/app/io.github.AyAmbo.ComfyUIFlatpak/data/ComfyUI-profiles/PROFILE
-~/.var/app/io.github.AyAmbo.ComfyUIFlatpak/config/ComfyUI-profiles/PROFILE
-~/.var/app/io.github.AyAmbo.ComfyUIFlatpak/cache/ComfyUI-profiles/PROFILE
-~/.var/app/io.github.AyAmbo.ComfyUIFlatpak/data/python-profiles/PROFILE
-```
+Under the app-data folder, named profiles use `data/ComfyUI-profiles/PROFILE`,
+`config/ComfyUI-profiles/PROFILE` and `data/python-profiles/PROFILE`.
+Several caches (including pip, uv, Hugging Face and torch) are shared;
+profiles are not separate security sandboxes.
 
 ## Build from source
 
@@ -233,7 +202,9 @@ flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flat
 flatpak install flathub org.freedesktop.Platform//25.08 org.freedesktop.Sdk//25.08
 ```
 
-Generate Python source manifest only when requirements/versions change:
+For an update, change the upstream commit in the manifest/docs and synchronize
+`packaging/sources/python-requirements.in` with upstream and Manager requirements.
+Regenerate dependency sources only when requirements/versions change:
 
 ```bash
 scripts/generate-python-sources.sh
@@ -247,7 +218,20 @@ scripts/install-local.sh
 scripts/test-flatpak.sh
 scripts/test-comfyui-flatpak-uv.sh
 python3 scripts/test-native-wheels.py
+python3 scripts/test-comfyui-flatpak-repair.py
 ```
+
+The GPU smoke test uses a separate profile and leaves its files for inspection.
+To test the HTTP API and a model-free image graph:
+
+```bash
+flatpak run io.github.AyAmbo.ComfyUIFlatpak --profile http-smoke --port 8189
+# In another terminal, from the source folder:
+python3 scripts/api-smoke-test.py --url http://127.0.0.1:8189
+```
+
+These tests cover startup, GPU operations and a model-free image graph, not full
+model inference or third-party node compatibility.
 
 The generator explicitly selects Linux x86_64 native wheels for `comfy-kitchen` and
 `comfy-aimdo`: their universal wheels omit the CUDA and DynamicVRAM libraries.
@@ -256,12 +240,11 @@ The generator explicitly selects Linux x86_64 native wheels for `comfy-kitchen` 
 Create release bundle:
 
 ```bash
-scripts/make-bundle.sh ../AyAmbo-ComfyUIFlatpak-v0.35.0-local-test
+scripts/make-bundle.sh
 ```
 
-The optional output directory defaults to `release/` and must be empty. Earlier
-release files are never deleted; the existing build/download cache is reused.
-Outputs include:
+Writes to `release/`; pass an empty directory as the first argument to use another
+location. Outputs:
 
 ```text
 AyAmbo-ComfyUIFlatpak.flatpak
@@ -270,29 +253,7 @@ AyAmbo-ComfyUIFlatpak.flatpak.zst
 AyAmbo-ComfyUIFlatpak.flatpak.zst.sha256
 AyAmbo-ComfyUIFlatpak.flatpak.zst.parts.sha256
 AyAmbo-ComfyUIFlatpak.flatpak.zst.part-*
-INSTALL.md
 ```
 
-Upload the `.part-*`, `.zst.sha256`, `.parts.sha256`, `.flatpak.sha256`, and `INSTALL.md`
-files to GitHub Releases, not the full `.flatpak` or `.zst`. Parts are below 2 GB;
-the bundler verifies both recombined compressed and decompressed SHA-256 hashes.
-
-## Modify/update
-
-Main files:
-
-```text
-io.github.AyAmbo.ComfyUIFlatpak.yml
-packaging/comfyui-flatpak-launcher
-packaging/comfyui-flatpak-install-requirements
-packaging/sources/python-requirements.in
-scripts/*.sh
-```
-
-To update ComfyUI or dependencies:
-
-1. Update the pinned ComfyUI commit in the manifest/docs.
-2. Check upstream `requirements.txt` and Manager version.
-3. Update `packaging/sources/python-requirements.in`.
-4. Run `scripts/generate-python-sources.sh`.
-5. Build/test/bundle again.
+Upload the `.part-*`, `.zst.sha256`, `.parts.sha256`, `.flatpak.sha256`
+files to GitHub Releases, not the full `.flatpak` or `.zst`. Parts are below 2 GB.
