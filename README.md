@@ -8,7 +8,7 @@ License: GPL-3.0-or-later.
 
 ## What is included
 
-- ComfyUI pinned to `ee71d5c4993f29086b27fde1629a945ae48425bf` (`0.36.0`).
+- ComfyUI pinned to `73c9bad4d21e7addbe1d13bc92eee0f1431b017d` (`0.37.0`).
 - Freedesktop runtime/SDK `25.08`.
 - PyTorch CUDA wheel stack (`torch 2.13.0` with CUDA 13 wheels).
 - ComfyUI-Manager enabled by default.
@@ -21,7 +21,7 @@ License: GPL-3.0-or-later.
 
 ## Install or update
 
-Packaging release **v0.6** contains ComfyUI **0.36.0**, for x86_64 Linux (not ComfyUI Desktop).
+Packaging release **v0.7** contains ComfyUI **0.37.0**, for x86_64 Linux (not ComfyUI Desktop).
 Install Flatpak and zstd with your distribution's package manager. On Debian/Ubuntu:
 
 ```bash
@@ -66,7 +66,7 @@ http://127.0.0.1:8188
 
 If you already have the full `.flatpak`, verify its `.sha256` and use the
 same `flatpak install --user --reinstall` command above. The startup log should
-show ComfyUI **0.36.0**. Test your important workflows after updating.
+show ComfyUI **0.37.0**. Test your important workflows after updating.
 
 Uninstall but keep data:
 
